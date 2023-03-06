@@ -1,5 +1,5 @@
 /*
-  Rocky and Bullwinkle Nell Motor Driver
+  Rocky and Bullwinkle Nell Motor Driver v1.95
   Drives a NEMA17 Stepper based upon a 32v DC signal
   from the CPU board that shows that the motor should run.
   If the signal is positive run the motor and count the number of
@@ -30,33 +30,31 @@ void loop() {
   turnOnNell = digitalRead(INPUT_PIN);                   // Read the input pin
 
   if (turnOnNell == HIGH && stepsMade < 910) {           // If Input Pin is High run Nell towards the blade
-    // run motor and count steps
-    digitalWrite(SLEEP_PIN, HIGH);
-    digitalWrite(DIR_PIN, LOW);                          // turn the motor towards the saw
-    delay(1);
+    digitalWrite(SLEEP_PIN, HIGH);                       // Wake a4988
+    digitalWrite(DIR_PIN, HIGH);                         // turn the motor Counter-CLockwise, towards the saw
+    delay(1);                                            // Data sheet says a4988 needs 1ms before stepping
     runForward();
     }
 
-    else if (turnOnNell == HIGH && stepsMade > 908) {    // At end of run and holding Nell in Place
-      digitalWrite(SLEEP_PIN, LOW);
-    }
+  else if (turnOnNell == HIGH && stepsMade > 908) {      // At end of run and holding Nell in Place
+    digitalWrite(SLEEP_PIN, LOW);
+  }
 
-    else if(turnOnNell == LOW && stepsMade > 0){         // If Input Pin Low and steps still remain return Nell to start
-    // NOTE for some reason the driver will not completely return to start if at the very end of the run, all other locations 
-    // will return exactly to start.  Increasing steps made at the end of a run is there to ensure return to start
-      if(stepsMade == 910){  
-        stepsMade = 920;
-      }
-      digitalWrite(SLEEP_PIN, HIGH);
-      digitalWrite(DIR_PIN, HIGH);
-      delay(1);
-      returnToStart();
+  else if(turnOnNell == LOW && stepsMade > 0){           // If Input Pin Low and steps still remain return Nell to start
+  // NOTE for some reason the driver will not completely return to start if at the very end of the run, all other locations 
+  // will return exactly to start.  Increasing steps made at the end of a run is there to ensure return to start
+    if(stepsMade == 910){  
+      stepsMade = 920;
     }
-    
-    else{                                                // Nothing going on, Sleep Motor and a4988
-      // just sleep the motor to conserve energy
-      digitalWrite(SLEEP_PIN, LOW);
-    }
+    digitalWrite(SLEEP_PIN, HIGH);                       // Wake a4988
+    digitalWrite(DIR_PIN, LOW);                          // turn the motor CLockwise, away from the saw
+    delay(1);                                            // Data sheet says a4988 needs 1ms before stepping
+    returnToStart();
+  }
+  
+  else{                                                  // Nothing going on, Sleep Motor and a4988
+    digitalWrite(SLEEP_PIN, LOW);
+  }
 }
 
 void runForward(){                                       // run motor and count steps
@@ -74,9 +72,9 @@ void runForward(){                                       // run motor and count 
 void returnToStart(){                                   // return motor to starting position
   while (stepsMade > 0) {
     digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(10);
+    delay(1);
     digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(10);  
+    delay(1);  
     --stepsMade;
     Serial.println(stepsMade); 
   } 
